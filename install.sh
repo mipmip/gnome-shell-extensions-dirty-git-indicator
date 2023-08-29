@@ -7,7 +7,7 @@ if [ "$UID" = "0" ]; then
     exit 101
 fi
 
-NAME=git@eexpss.gmail.com
+NAME=dirty-git-indicator@pimsnel.com
 
 function pack-extension {
   echo "Packing extension..."
@@ -16,7 +16,7 @@ function pack-extension {
   gnome-extensions pack src \
     --force \
     --extra-source="../LICENSE" \
-    --extra-source="git-monitor.json" \
+    --extra-source="dirty-git.json" \
     --extra-source="ui.js" \
     --extra-source="org.gnome.gitg-symbolic.svg" \
     --extra-source="org.gnome.gitg-symbolic-alert.svg" \

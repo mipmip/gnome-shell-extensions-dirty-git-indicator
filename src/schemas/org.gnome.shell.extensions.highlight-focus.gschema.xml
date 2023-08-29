@@ -1,5 +1,5 @@
 <schemalist>
-  <schema id="org.gnome.shell.extensions.gs-git" path="/org/gnome/shell/extensions/gs-git/">
+  <schema id="org.gnome.shell.extensions.dirty-git" path="/org/gnome/shell/extensions/dirty-git/">
 
     <key type="s" name="open-in-terminal-command">
         <default>"kgx --working-directory='%WORKING_DIRECTORY' -- bash -c 'git status; bash'"</default>

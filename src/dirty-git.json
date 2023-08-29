@@ -1,0 +1,13 @@
+{
+  "description_dirs": "Defined parent directories containing git repositories to monitor",
+  "dirs" : [
+    "~",
+    "~/projects",
+    "~/cust1*",
+    "~/cust2*"
+  ],
+  "description_repos": "Defined repositories to monitor.",
+  "repos": [
+    "~/some/dir/my-notes-repo"
+  ]
+}
