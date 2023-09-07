@@ -47,7 +47,7 @@ const Indicator = GObject.registerClass(
     _init() {
       super._init(0.0, _domain);
 
-      this.dirtyDirs = 0;
+      //this.dirtyDirs = 0;
       this._settings = ExtensionUtils.getSettings();
       this._settings.connect("changed::open-in-terminal-command", ()=>{this.initSettings();} );
       this._settings.connect("changed::show-changed-files", ()=>{this.initSettings();} );
@@ -59,11 +59,10 @@ const Indicator = GObject.registerClass(
       this.add_child(this.icon);
 
       this.connect("button-press-event", (actor, event) => {
-        if (event.get_button() == 2) {	// refresh
-          this.menu._getMenuItems().forEach((j) => { j.destroy(); });
+        if (event.get_button() == 2) { // refresh
           this.refresh();
         }
-        if (event.get_button() == 3) {	// open configfile
+        if (event.get_button() == 3) { // open configfile
           Gio.app_info_launch_default_for_uri(`file://${configfile}`, global.create_app_launch_context(0, -1));
         }
       });
@@ -85,8 +84,13 @@ const Indicator = GObject.registerClass(
     }
 
     refresh() {
+
+      this.menu._getMenuItems().forEach((j) => { j.destroy(); });
+
+      this.add_extra_items();
+
       // re-read json file, check all dirs, refresh menu.
-      this.dirtyDirs = 0;
+      //this.dirtyDirs = 0;
       try {
         if (GLib.file_test(configfile, GLib.FileTest.IS_REGULAR)) {
           const [ok, content] = GLib.file_get_contents(configfile);
@@ -120,6 +124,8 @@ const Indicator = GObject.registerClass(
 
       gitDirs = gitDirs.concat(globdirs);
 
+      this.icon.gicon = Gio.icon_new_for_string(Me.path + "/org.gnome.gitg-symbolic.svg");
+
       for (let i of gitDirs) {
         const r = this.lsDir(i);
         if (!r) continue;
@@ -136,8 +142,8 @@ const Indicator = GObject.registerClass(
     }
 
     async_cmd_git_st(root, path) {
-      if (GLib.chdir(root) != 0) return null;	 // need improve
-      if (GLib.chdir(path) != 0) return null;	 // need improve
+      if (GLib.chdir(root) != 0) return null;  // need improve
+      if (GLib.chdir(path) != 0) return null;  // need improve
       try {
         let proc = Gio.Subprocess.new(
           [ 'git', 'status' ],
@@ -148,11 +154,10 @@ const Indicator = GObject.registerClass(
             let [, stdout, stderr] = proc.communicate_utf8_finish(res);
             if (proc.get_successful()) {
               const l = stdout.split("\n").filter(item => item.match(/[:：](?=\ )/));
-              if(this.dirtyDirs == 0){
-                this.icon.gicon = Gio.icon_new_for_string(Me.path + "/org.gnome.gitg-symbolic.svg");
-              }
+              //if(this.dirtyDirs == 0){
+              //}
               if (l.length > 0) {
-                this.dirtyDirs += 1;
+                //this.dirtyDirs += 1;
                 if(this.alertDirtyRepos){
                   this.icon.gicon = Gio.icon_new_for_string(Me.path + "/org.gnome.gitg-symbolic-alert.svg");
                 }
@@ -163,6 +168,7 @@ const Indicator = GObject.registerClass(
                   }
                 }
               }
+
             } else {
               log("err: " + stderr);
             }
@@ -171,13 +177,64 @@ const Indicator = GObject.registerClass(
       } catch (e) { logError(e); }
     };
 
+    add_extra_items(){
+
+      let item;
+
+      item = new PopupMenu.PopupImageMenuItem("refresh", "view-refresh-symbolic", {});
+
+      item.label.clutter_text.set_line_alignment(Pango.Alignment.RIGHT);
+      //const pango = text.bold().italics().fontcolor("#F29F9C").replace(/font/g, "span");
+      //item.label.clutter_text.set_markup(pango);
+      item.connect('activate', (actor, event) => {
+        this.refresh()
+      });
+      this.menu.addMenuItem(item);
+
+
+      const itemS = new PopupMenu.PopupSeparatorMenuItem('dirty repo\'s');
+      // Setting the label
+      // menuItem.label.text = 'New Label';
+      this.menu.addMenuItem(itemS);
+
+    }
+
     add_menu(path, text, isDir) {
       let item;
       if (isDir) {
-        item = new PopupMenu.PopupImageMenuItem(text, this.stock_icon);
+
+
+        const PopupMenu = imports.ui.popupMenu;
+
+
+        item = new PopupMenu.PopupSubMenuMenuItem(text, true, {});
+
+        // Setting the icon
+        //item.setIcon(this.stock_icon);
+        item.icon.icon_name = 'folder-symbolic';
+        //item.icon = this.stock_icon;
+
+        // Setting the label
+        //menuItem.label.text = 'New Label';
+
+        // Adding items
+        item.menu.addAction('Open in Terminal', () => {
+          let parsed_command = this.openInTerminalCommand.replace(/%WORKING_DIRECTORY/g,`${path}/${text}`)
+          GLib.spawn_command_line_async(parsed_command);
+          //~ Util.spawn(['gnome-terminal', `--working-directory='${path}/${text}' -- bash -c 'git status; bash'`]); //no work correctly.
+          return Clutter.EVENT_STOP;
+
+        });
+        item.menu.addAction('Open in File Manager', () => {
+          Gio.app_info_launch_default_for_uri(`file://${path}/${text}`, global.create_app_launch_context(0, -1));
+        });
+
+        //item = new PopupMenu.PopupImageMenuItem(text, this.stock_icon);
         item.label.clutter_text.set_line_alignment(Pango.Alignment.RIGHT);
         const pango = text.bold().italics().fontcolor("#F29F9C").replace(/font/g, "span");
         item.label.clutter_text.set_markup(pango);
+
+        /*
         item.connect('activate', (actor, event) => {
           if (event.get_button() == 3) {
             let parsed_command = this.openInTerminalCommand.replace(/%WORKING_DIRECTORY/g,`${path}/${text}`)
@@ -187,6 +244,7 @@ const Indicator = GObject.registerClass(
           }
           Gio.app_info_launch_default_for_uri(`file://${path}/${text}`, global.create_app_launch_context(0, -1));
         });
+        */
       } else {
         item = new PopupMenu.PopupMenuItem(text);
         item.connect('activate', (actor, event) => {
