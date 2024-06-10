@@ -15,21 +15,42 @@
  * along with Highlight Focus.  If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
+
+//const { GObject, St, Gio, GLib, Pango, Clutter } = imports.gi;
+
+
+//const ExtensionUtils = imports.misc.extensionUtils;
+//const Main = imports.ui.main;
+//const PanelMenu = imports.ui.panelMenu;
+//const PopupMenu = imports.ui.popupMenu;
+//const Me = ExtensionUtils.getCurrentExtension();
+//const ByteArray = imports.byteArray;
+//const Util = imports.misc.util;
+
+import GObject from "gi://GObject";
+import St from "gi://St";
+import Gio from "gi://Gio";
+import GLib from "gi://GLib";
+import Pango from "gi://Pango";
+import Clutter from "gi://Clutter";
+
+import * as Util from 'resource:///org/gnome/shell/misc/util.js';
+
+import { Main } from "resource:///org/gnome/shell/ui/main.js";
+import { PanelMenu } from "resource:///org/gnome/shell/ui/panelmenu.js";
+import { PopupMenu } from "resource:///org/gnome/shell/ui/popupmenu.js";
+import { ByteArray } from "resource:///org/gnome/shell/bytearray.js";
+
+import { Extension, gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js";
+//import Meta from 'gi://Meta';
+
 const _domain = 'dirty-git';
 const GETTEXT_DOMAIN = _domain;
+//const Gettext = imports.gettext.domain(GETTEXT_DOMAIN);
+//const _ = Gettext.gettext;
 
-const { GObject, St, Gio, GLib, Pango, Clutter } = imports.gi;
-
-const Gettext = imports.gettext.domain(GETTEXT_DOMAIN);
-const _ = Gettext.gettext;
-
-const ExtensionUtils = imports.misc.extensionUtils;
-const Main = imports.ui.main;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const Me = ExtensionUtils.getCurrentExtension();
-const ByteArray = imports.byteArray;
-const Util = imports.misc.util;
+let extensionObject = Extension.lookupByUUID('dirty-git-indicator@pimsnel.com');
+let extensionSettings = extensionObject.getSettings();
 
 function lg(s) { log("===" + _domain + "===>" + s); }
 
@@ -37,7 +58,7 @@ let gitDirs = [];
 let gitRepos = [];
 const configname = _domain + ".json";  //没有界面时，还不能改成schmes方式。
 const configfile = GLib.get_user_config_dir() + "/" + configname;
-const configorig = Me.path + "/" + configname;
+const configorig = extensionObject.path + "/" + configname;
 
 const TOGGLE_ON_ICON = 'face-smile-symbolic';
 const TOGGLE_OFF_ICON = 'face-sad-symbolic';
@@ -48,14 +69,14 @@ const Indicator = GObject.registerClass(
       super._init(0.0, _domain);
 
       //this.dirtyDirs = 0;
-      this._settings = ExtensionUtils.getSettings();
+      this._settings = extensionSettings;
       this._settings.connect("changed::open-in-terminal-command", ()=>{this.initSettings();} );
       this._settings.connect("changed::show-changed-files", ()=>{this.initSettings();} );
       this._settings.connect("changed::alert-dirty-repos", ()=>{this.initSettings();} );
       this.initSettings();
-      this.stock_icon = Gio.icon_new_for_string(Me.path + "/org.gnome.gitg-symbolic.svg");
+      this.stock_icon = Gio.icon_new_for_string(extensionObject.path + "/org.gnome.gitg-symbolic.svg");
       this.icon = new St.Icon({style_class: 'system-status-icon'});
-      this.icon.gicon = Gio.icon_new_for_string(Me.path + "/org.gnome.gitg-symbolic.svg");
+      this.icon.gicon = Gio.icon_new_for_string(extensionObject.path + "/org.gnome.gitg-symbolic.svg");
       this.add_child(this.icon);
 
       this.connect("button-press-event", (actor, event) => {
@@ -124,7 +145,7 @@ const Indicator = GObject.registerClass(
 
       gitDirs = gitDirs.concat(globdirs);
 
-      this.icon.gicon = Gio.icon_new_for_string(Me.path + "/org.gnome.gitg-symbolic.svg");
+      this.icon.gicon = Gio.icon_new_for_string(extensionObject.path + "/org.gnome.gitg-symbolic.svg");
 
       for (let i of gitDirs) {
         const r = this.lsDir(i);
@@ -159,7 +180,7 @@ const Indicator = GObject.registerClass(
               if (l.length > 0) {
                 //this.dirtyDirs += 1;
                 if(this.alertDirtyRepos){
-                  this.icon.gicon = Gio.icon_new_for_string(Me.path + "/org.gnome.gitg-symbolic-alert.svg");
+                  this.icon.gicon = Gio.icon_new_for_string(extensionObject.path + "/org.gnome.gitg-symbolic-alert.svg");
                 }
                 this.add_menu(root, path, true);
                 if(this.showChangedFiles){
@@ -311,11 +332,10 @@ const Indicator = GObject.registerClass(
     }
   });
 
-class Extension {
-  constructor(uuid) {
-    this._uuid = uuid;
-
-    ExtensionUtils.initTranslations(GETTEXT_DOMAIN);
+export default class DirtyGitExtension extends Extension {
+  constructor() {
+    this._uuid = 'dirty-git-indicator@pimsnel.com';
+    this.initTranslations(GETTEXT_DOMAIN);
   }
 
   enable() {
@@ -330,6 +350,8 @@ class Extension {
   }
 }
 
+/*
 function init(meta) {
   return new Extension(meta.uuid);
 }
+*/

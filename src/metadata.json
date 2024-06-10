@@ -6,11 +6,8 @@
   "gettext-domain": "dirty-git",
   "settings-schema": "org.gnome.shell.extensions.dirty-git",
   "shell-version": [
-    "40",
-    "41",
-    "42",
-    "43",
-    "44"
+    "45",
+    "46"
   ],
   "version": 1
 }
